@@ -18,17 +18,10 @@ import {
 } from "@chakra-ui/react";
 import { GET_POKEMON, GET_POKEMONS } from "@/graphql/queries";
 import createApolloClient from "@/lib/apollo-client";
-
-interface Pokemon {
-  id: string;
-  name: string;
-  image: string;
-  classification: string;
-  types: string[];
-}
+import { PokemonDetail } from "@/types/pokemon";
 
 interface PokemonPageProps {
-  pokemon: Pokemon;
+  pokemon: PokemonDetail;
 }
 
 export default function PokemonPage({ pokemon }: PokemonPageProps) {
@@ -194,9 +187,15 @@ export const getStaticProps = async (context: { params: { id: string } }) => {
 
   console.log(data);
 
+  if (!data?.pokemon) {
+    return {
+      notFound: true,
+    };
+  }
+
   return {
     props: {
-      pokemon: (data as { pokemon: Pokemon }).pokemon,
+      pokemon: data.pokemon,
     },
   };
 };

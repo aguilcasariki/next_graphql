@@ -11,23 +11,25 @@ import {
   Center,
   Spinner,
 } from "@chakra-ui/react";
-import createApolloClient from "@/lib/apollo-client";
-import { GET_POKEMONS } from "@/graphql/queries";
+import { SearchBar } from "@/components/SearchBar";
 import Link from "next/link";
+import { useState, useMemo } from "react";
+import { useQuery } from "@apollo/client/react";
+import { GET_POKEMONS } from "@/graphql/queries";
+import { GetPokemonsResponse, Pokemon } from "@/types/pokemon";
+import { useSearchPokemons } from "@/hooks/useSearchPokemons";
 
-interface Pokemon {
-  id: string;
-  name: string;
-  image: string;
-  types?: string[];
-}
+export default function Home() {
+  const {
+    searchTerm,
+    filteredPokemons,
+    handleSearch,
+    loading,
+    error,
+    pokemons,
+  } = useSearchPokemons();
 
-interface HomeProps {
-  pokemons: Pokemon[];
-}
-
-export default function Home({ pokemons }: HomeProps) {
-  if (!pokemons) {
+  if (loading) {
     return (
       <Center h="100vh">
         <Spinner size="xl" color="blue.500" />
@@ -71,6 +73,11 @@ export default function Home({ pokemons }: HomeProps) {
         {/* Main Content */}
         <Container maxW="7xl" py={8}>
           <VStack gap={8}>
+            {/* Search Bar */}
+            <Box textAlign="center">
+              <SearchBar onSearch={handleSearch} />
+            </Box>
+
             <Box textAlign="center">
               <Badge
                 colorScheme="blue"
@@ -79,7 +86,8 @@ export default function Home({ pokemons }: HomeProps) {
                 py={1}
                 borderRadius="full"
               >
-                {pokemons.length} Pokémon encontrados
+                {filteredPokemons.length} Pokémon encontrados
+                {searchTerm && ` (filtrado de ${pokemons.length})`}
               </Badge>
             </Box>
 
@@ -88,7 +96,7 @@ export default function Home({ pokemons }: HomeProps) {
               gap={6}
               w="full"
             >
-              {pokemons.map((pokemon) => (
+              {filteredPokemons.map((pokemon) => (
                 <Link key={pokemon.id} href={`/pokemon/${pokemon.id}`}>
                   <Box
                     as="article"
@@ -149,7 +157,7 @@ export default function Home({ pokemons }: HomeProps) {
               ))}
             </SimpleGrid>
 
-            {pokemons.length === 0 && (
+            {filteredPokemons.length === 0 && !loading && (
               <Center py={16}>
                 <VStack gap={4} textAlign="center">
                   <Text fontSize="2xl" color="gray.500">
@@ -160,7 +168,9 @@ export default function Home({ pokemons }: HomeProps) {
                     color="gray.600"
                     _dark={{ color: "gray.400" }}
                   >
-                    No se encontraron Pokémon
+                    {searchTerm
+                      ? `No se encontraron Pokémon que coincidan con "${searchTerm}"`
+                      : "No se encontraron Pokémon"}
                   </Text>
                 </VStack>
               </Center>
@@ -171,21 +181,3 @@ export default function Home({ pokemons }: HomeProps) {
     </>
   );
 }
-
-export const getServerSideProps = async () => {
-  const client = createApolloClient();
-  const { data } = await client.query({
-    query: GET_POKEMONS,
-    variables: {
-      first: 10,
-    },
-  });
-
-  console.log(data);
-
-  return {
-    props: {
-      pokemons: (data as { pokemons: Pokemon[] }).pokemons,
-    },
-  };
-};
