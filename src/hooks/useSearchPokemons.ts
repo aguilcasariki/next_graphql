@@ -1,28 +1,21 @@
-import { GET_POKEMONS } from "@/graphql/queries";
-import { GetPokemonsResponse, Pokemon } from "@/types/pokemon";
-import { useQuery } from "@apollo/client/react";
+import { Pokemon } from "@/types/pokemon";
 import { useMemo, useState } from "react";
 
-export const useSearchPokemons = () => {
-  const { data, loading, error } = useQuery<GetPokemonsResponse>(GET_POKEMONS, {
-    variables: {
-      first: 10,
-    },
-  });
+export const useSearchPokemons = (pokemons: Pokemon[]) => {
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   // Filter Pokemon based on search term (case-insensitive)
   const filteredPokemons = useMemo<Pokemon[]>(() => {
     if (!searchTerm.trim()) {
-      return data?.pokemons || [];
+      return pokemons || [];
     }
 
     return (
-      data?.pokemons.filter((pokemon: Pokemon) =>
+      pokemons.filter((pokemon: Pokemon) =>
         pokemon.name.toLowerCase().includes(searchTerm.toLowerCase())
       ) || []
     );
-  }, [data, searchTerm]);
+  }, [pokemons, searchTerm]);
 
   const handleSearch = (newSearchTerm: string) => {
     setSearchTerm(newSearchTerm);
@@ -31,8 +24,7 @@ export const useSearchPokemons = () => {
     searchTerm,
     filteredPokemons,
     handleSearch,
-    loading,
-    error,
-    pokemons: data?.pokemons || [],
+
+    pokemons: pokemons || [],
   };
 };
